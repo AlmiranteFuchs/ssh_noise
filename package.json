@@ -1,7 +1,7 @@
 {
   "name": "ssh_noise",
   "version": "1.0.0",
-  "description": "Auto ssh and make noise!",
+  "description": "A 'script' to auto inject bash commands into a list of hosts",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,9 +9,9 @@
   "author": "Alm-MarcyF",
   "license": "ISC",
   "dependencies": {
-    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
+    "fs": "^0.0.1-security",
     "node-ssh": "^13.0.0",
-    "ssh2-client": "^1.3.2"
+    "ssh2": "^1.11.0"
   }
 }
