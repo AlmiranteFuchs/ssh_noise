@@ -1,10 +1,7 @@
-require('dotenv').config();
-
 const fs = require('fs');
 const { readFileSync } = require('fs');
 const { Client } = require('ssh2');
 
-const conn = new Client();
 
 if (process.argv.length < 4) {
   console.log('Usage: node index.js <username> <.secret file> <.sh file>');
@@ -23,28 +20,37 @@ const secret = readFileSync(process.argv[3], 'utf8')
 // Get .sh command from file
 const command = readFileSync(process.argv[4], 'utf8');
 
+
 // For each host, connect and run command
-async function run(sendOnly) {
-  for (let index = 0; index < hosts.length; index++) {
-    const host = hosts[index];
+async function run(sendOnly, host) {
+  // Promise to wait for connection
+  await new Promise((resolve, reject) => {
+    const conn = new Client();
 
     console.log('Connecting to ' + host);
 
-    await new Promise((resolve, reject) => conn.on('ready', () => {
+    conn.on('error', (err) => {
+      console.log("Error: " + err + " on host " + host);
+      conn.end();
+      reject();
+    });
+    conn.on('ready', () => {
       console.log('Client :: ready');
       conn.exec(command, (err, stream) => {
-        
+
         if (err) {
-            reject(err);
-            return;
-        }
-        resolve(stream);
-        if(sendOnly){
+          console.log("Error: " + err + " on host " + host);
           conn.end();
+          reject();
+        }
+        if (sendOnly) {
+          conn.end();
+          resolve();
         }
         stream.on('close', (code, signal) => {
           console.log('Stream :: close :: code: ' + code + ', signal: ' + signal);
           conn.end();
+          resolve();
         }).on('data', (data) => {
           console.log('STDOUT:\n ' + data);
         }).stderr.on('data', (data) => {
@@ -55,9 +61,16 @@ async function run(sendOnly) {
       host: host,
       username: username,
       password: secret
-    }));
+    })
+  }).catch((err) => {
+    // Do nothing, it's already handled
+  });
+}
 
+async function main() {
+  for (const [index, host] of hosts.entries()) {
+    await run(false, host);
   }
 }
 
-run(true);
+main();
