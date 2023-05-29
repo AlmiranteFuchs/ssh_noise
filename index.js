@@ -2,11 +2,13 @@ const fs = require('fs');
 const { readFileSync } = require('fs');
 const { Client } = require('ssh2');
 
+// .env config
+require('dotenv').config();
 
-if (process.argv.length < 4) {
-  console.log('Usage: node index.js <username> <.secret file> <.sh file>');
-  process.exit(1);
-}
+// if (process.argv.length < 4) {
+//   console.log('Usage: node index.js <username> <.secret file> <.sh file>');
+//   process.exit(1);
+// }
 
 // Get all hosts from json as array
 const rawdata = fs.readFileSync('./hosts.json');
@@ -14,11 +16,11 @@ let hosts = JSON.parse(rawdata).hosts;
 
 
 // Get username and secret from command line
-const username = process.argv[2];
-const secret = readFileSync(process.argv[3], 'utf8')
+const username = process.env.USERNAME
+const secret = process.env.PASSWORD
 
 // Get .sh command from file
-const command = readFileSync(process.argv[4], 'utf8');
+const command = readFileSync(process.argv[2], 'utf8');
 
 
 // For each host, connect and run command
@@ -28,6 +30,12 @@ async function run(sendOnly, host) {
     const conn = new Client();
 
     console.log('Connecting to ' + host);
+
+    setTimeout(() => {
+      console.log("Timeout on host " + host);
+      reject();
+      conn.end();
+    }, 1000);
 
     conn.on('error', (err) => {
       console.log("Error: " + err + " on host " + host);
